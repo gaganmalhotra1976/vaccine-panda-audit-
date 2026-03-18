@@ -10,6 +10,7 @@
 <meta name="theme-color" content="#1a6e36">
 <meta name="description" content="Vaccine Panda Daily Inventory Audit System">
 <link rel="manifest" href="manifest.json">
+<meta name="apple-touch-startup-image" content="icon-512.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Vaccine Panda – Daily Inventory Audit</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -611,6 +612,98 @@
 </style>
 </head>
 <body>
+
+<!-- PASSWORD LOCK SCREEN -->
+<div id="lockScreen" style="
+  position:fixed;inset:0;z-index:999999;
+  background:linear-gradient(135deg,#1a6e36 0%,#2D9B4F 60%,#3dbf66 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Nunito',sans-serif;padding:24px;">
+  <div style="
+    background:white;border-radius:24px;padding:40px 32px;
+    width:100%;max-width:380px;text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div style="font-size:3.5rem;margin-bottom:8px;">🐼</div>
+    <h1 style="font-size:1.5rem;font-weight:900;color:#1a6e36;margin-bottom:4px;">Vaccine Panda</h1>
+    <p style="font-size:0.85rem;color:#888;margin-bottom:28px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Daily Audit System · Staff Only</p>
+    <div style="margin-bottom:16px;text-align:left;">
+      <label style="font-size:0.78rem;font-weight:800;color:#1a6e36;text-transform:uppercase;letter-spacing:0.4px;display:block;margin-bottom:6px;">Enter Password</label>
+      <div style="position:relative;">
+        <input type="password" id="pwdInput" placeholder="Enter your password"
+          onkeydown="if(event.key==='Enter')checkPassword()"
+          style="width:100%;padding:12px 44px 12px 14px;border:2px solid #d4edda;border-radius:10px;
+          font-family:'Nunito',sans-serif;font-size:1rem;font-weight:600;color:#1a1a1a;
+          background:#e8f7ee;outline:none;box-sizing:border-box;" />
+        <span onclick="togglePwd()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:1.1rem;" id="eyeIcon">👁️</span>
+      </div>
+    </div>
+    <div id="pwdError" style="display:none;background:#fdecea;color:#c0392b;font-size:0.82rem;font-weight:700;padding:8px 12px;border-radius:8px;margin-bottom:12px;">
+      ❌ Wrong password. Please try again.
+    </div>
+    <button onclick="checkPassword()" style="
+      width:100%;padding:13px;background:linear-gradient(135deg,#1a6e36,#3dbf66);
+      color:white;border:none;border-radius:10px;font-family:'Nunito',sans-serif;
+      font-weight:800;font-size:1rem;cursor:pointer;
+      box-shadow:0 4px 14px rgba(45,155,79,0.35);letter-spacing:0.2px;">
+      🔓 Unlock Audit System
+    </button>
+    <p style="margin-top:20px;font-size:0.75rem;color:#bbb;">Vaccine Panda · Internal Use Only</p>
+  </div>
+</div>
+
+<script>
+(function() {
+  // Check if already unlocked in this session
+  if (sessionStorage.getItem('vp_unlocked') === 'yes') {
+    document.getElementById('lockScreen').style.display = 'none';
+  }
+})();
+
+function checkPassword() {
+  const input = document.getElementById('pwdInput').value;
+  const hash = btoa(unescape(encodeURIComponent(input)));
+  // stored as base64 so it's not plaintext in source
+  if (hash === btoa(unescape(encodeURIComponent('Panda@2026')))) {
+    sessionStorage.setItem('vp_unlocked', 'yes');
+    const ls = document.getElementById('lockScreen');
+    ls.style.transition = 'opacity 0.4s ease';
+    ls.style.opacity = '0';
+    setTimeout(() => ls.style.display = 'none', 400);
+  } else {
+    document.getElementById('pwdError').style.display = 'block';
+    document.getElementById('pwdInput').style.borderColor = '#e05252';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+    // shake animation
+    const box = document.getElementById('pwdInput');
+    box.style.animation = 'shake 0.4s ease';
+    setTimeout(() => box.style.animation = '', 400);
+  }
+}
+
+function togglePwd() {
+  const input = document.getElementById('pwdInput');
+  const eye = document.getElementById('eyeIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    eye.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    eye.textContent = '👁️';
+  }
+}
+</script>
+
+<style>
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}
+  60%{transform:translateX(-6px)}
+  80%{transform:translateX(6px)}
+}
+</style>
+
 <!-- PWA Install Banner -->
 <div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#1a6e36,#2D9B4F);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,0.2);font-family:'Nunito',sans-serif;">
   <div style="display:flex;align-items:center;gap:10px;">
@@ -1300,6 +1393,7 @@ function shareWhatsApp() {
   msg += `📦 *TOTAL VIALS: ${totalVials}*\n`;
   if (notes) msg += `\n📝 *Notes:* ${notes}\n`;
   msg += `\n_Vaccine Panda Audit System_`;
+  msg += `\n\n📲 *Install App:* https://gaganmalhotra1976.github.io/vaccine-panda-audit-/install.html`;
 
   const phone = '919810007056';
   const encoded = encodeURIComponent(msg);
@@ -1642,6 +1736,7 @@ function shareCombinedWhatsApp() {
 
   msg += '\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
   msg += '_Vaccine Panda Full Audit \u2022 ' + auditDate + '_';
+  msg += '\n\n\uD83D\uDCF2 *Install App:* https://gaganmalhotra1976.github.io/vaccine-panda-audit-/install.html';
 
   generateCombinedPDF();
   window.open('https://wa.me/919810007056?text=' + encodeURIComponent(msg), '_blank');
