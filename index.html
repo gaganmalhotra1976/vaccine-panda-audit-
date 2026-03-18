@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VP Audit">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a6e36">
+<meta name="description" content="Vaccine Panda Daily Inventory Audit System">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Vaccine Panda – Daily Inventory Audit</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+  :root {
+    --bamboo: #2D9B4F;
+    --bamboo-dark: #1a6e36;
+    --bamboo-light: #e8f7ee;
+    --bamboo-mid: #9dd8b0;
+    --panda-black: #1a1a1a;
+    --panda-white: #fafdf9;
+    --accent: #f7c843;
+    --accent-dark: #d4a017;
+    --danger: #e05252;
+    --card: #ffffff;
+    --border: #d4edda;
+    --shadow: 0 4px 24px rgba(45,155,79,0.10);
+    --shadow-lg: 0 8px 40px rgba(45,155,79,0.16);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--panda-white);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(45,155,79,0.07) 0%, transparent 50%),
+      radial-gradient(circle at 90% 80%, rgba(247,200,67,0.08) 0%, transparent 50%);
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, var(--bamboo-dark) 0%, var(--bamboo) 60%, #3dbf66 100%);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    box-shadow: 0 4px 20px rgba(26,110,54,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    font-size: 2.4rem;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+  }
+
+  .header-text h1 {
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .header-text p {
+    color: var(--bamboo-mid);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .header-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: var(--panda-black);
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 5px 14px;
+    border-radius: 999px;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  /* MAIN */
+  .main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px;
+    margin-bottom: 24px;
+    border: 1.5px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--bamboo), var(--accent));
+  }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--bamboo-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .icon { font-size: 1.2rem; }
+
+  /* FORM GRID */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .header { padding: 16px 18px; }
+    .header-text h1 { font-size: 1.2rem; }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--bamboo-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  input, select, textarea {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--panda-black);
+    background: var(--bamboo-light);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--bamboo);
+    box-shadow: 0 0 0 3px rgba(45,155,79,0.12);
+  }
+
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232D9B4F' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 38px;
+  }
+
+  /* AUDIT LINE ITEMS */
+  .items-header {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 40px;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--bamboo-dark);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+  }
+
+  .items-header span {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr 1fr 40px;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 4px;
+    border-bottom: 1px dashed var(--border);
+    animation: slideIn 0.25s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .item-row input[type="number"] {
+    text-align: center;
+  }
+
+  .btn-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--danger);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+
+  .btn-remove:hover { background: #fdecea; }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 11px 22px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-add {
+    background: var(--bamboo-light);
+    color: var(--bamboo-dark);
+    border: 2px dashed var(--bamboo);
+    width: 100%;
+    justify-content: center;
+    margin-top: 12px;
+    font-size: 0.88rem;
+  }
+
+  .btn-add:hover {
+    background: var(--bamboo);
+    color: white;
+    border-style: solid;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--bamboo), #3dbf66);
+    color: white;
+    box-shadow: 0 4px 14px rgba(45,155,79,0.35);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(45,155,79,0.45);
+  }
+
+  .btn-whatsapp {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+    box-shadow: 0 4px 14px rgba(37,211,102,0.35);
+    font-size: 1rem;
+    padding: 14px 28px;
+  }
+
+  .btn-whatsapp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37,211,102,0.5);
+  }
+
+  .btn-pdf {
+    background: linear-gradient(135deg, #e05252, #c0392b);
+    color: white;
+    box-shadow: 0 4px 14px rgba(224,82,82,0.3);
+    font-size: 1rem;
+    padding: 14px 28px;
+  }
+
+  .btn-pdf:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(224,82,82,0.4);
+  }
+
+  .actions-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  /* SUMMARY TABLE */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .summary-table th {
+    background: var(--bamboo-dark);
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .summary-table th:first-child { border-radius: 8px 0 0 0; }
+  .summary-table th:last-child { border-radius: 0 8px 0 0; }
+
+  .summary-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .summary-table tr:nth-child(even) td { background: var(--bamboo-light); }
+  .summary-table tr:hover td { background: #d4f0df; }
+
+  .vials-badge {
+    background: var(--bamboo);
+    color: white;
+    font-weight: 800;
+    font-size: 0.82rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: 'DM Mono', monospace;
+    display: inline-block;
+  }
+
+  /* TIMESTAMP */
+  .timestamp-bar {
+    background: var(--panda-black);
+    color: var(--bamboo-mid);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .timestamp-bar span { color: var(--accent); font-weight: 500; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--panda-black);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: transform 0.3s ease;
+    z-index: 999;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+
+  .empty-state .emoji { font-size: 2.5rem; display: block; margin-bottom: 8px; }
+
+  /* CATEGORY CHIP */
+  .category-section { margin-bottom: 10px; }
+
+  .category-header {
+    background: linear-gradient(135deg, var(--bamboo), #4cbb72);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 800;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .category-rows { border: 2px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+
+  /* MOBILE ITEMS */
+  @media (max-width: 640px) {
+    .items-header, .item-row {
+      grid-template-columns: 1fr 1fr;
+      font-size: 0.82rem;
+    }
+    .items-header span:nth-child(3),
+    .items-header span:nth-child(4),
+    .items-header span:nth-child(5),
+    .item-row > *:nth-child(3),
+    .item-row > *:nth-child(4),
+    .item-row > *:nth-child(5) { display: none; }
+  }
+
+  .divider {
+    border: none;
+    border-top: 2px dashed var(--border);
+    margin: 8px 0 16px;
+  }
+
+  /* INLINE ADD BUTTON */
+  .btn-inline-add {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.78rem;
+    background: var(--bamboo);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 0 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-inline-add:hover { background: var(--bamboo-dark); transform: translateY(-1px); }
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: white;
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 16px 60px rgba(0,0,0,0.25);
+    animation: popIn 0.22s ease;
+    position: relative;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.92) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--bamboo-dark);
+  }
+  .modal-close {
+    background: none; border: none; font-size: 1.1rem; cursor: pointer;
+    color: #aaa; padding: 2px 6px; border-radius: 50%;
+    transition: background 0.15s, color 0.15s;
+  }
+  .modal-close:hover { background: #fee; color: var(--danger); }
+  .modal-hint { font-size: 0.82rem; color: #888; margin-bottom: 18px; line-height: 1.5; }
+  /* ─── TABS ─────────────────────────────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    padding: 18px 20px 0;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .tab-btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.92rem;
+    padding: 11px 24px;
+    border: none;
+    border-radius: 12px 12px 0 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.1px;
+  }
+  .tab-btn.active {
+    background: var(--panda-white);
+    color: var(--bamboo-dark);
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+  }
+  .tab-btn:not(.active):hover {
+    background: rgba(255,255,255,0.4);
+    color: white;
+  }
+  .tab-pill {
+    background: var(--accent);
+    color: var(--panda-black);
+    font-size: 0.7rem;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 999px;
+    min-width: 20px;
+    text-align: center;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── EQUIPMENT TABLE ──────────────────────────────────────────────────── */
+  .eq-status-ok    { color: #2D9B4F; font-weight: 800; }
+  .eq-status-issue { color: #e05252; font-weight: 800; }
+  .eq-status-na    { color: #aaa; }
+  .condition-select {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 8px;
+    background: var(--bamboo-light);
+    cursor: pointer;
+    width: 100%;
+    min-width: 110px;
+  }
+  .eq-notes-input {
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 8px;
+    background: var(--bamboo-light);
+    width: 100%;
+    min-width: 120px;
+  }
+  .eq-qty-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 8px;
+    background: var(--bamboo-light);
+    width: 64px;
+    text-align: center;
+  }
+  .eq-row-issue td { background: #fff5f5 !important; }
+  .eq-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  .eq-table th {
+    background: var(--bamboo-dark);
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .eq-table th:first-child { border-radius: 8px 0 0 0; }
+  .eq-table th:last-child  { border-radius: 0 8px 0 0; }
+  .eq-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .eq-table tr:nth-child(even) td { background: var(--bamboo-light); }
+  .badge-custom { background: var(--accent); color: #333; font-size: 0.68rem; font-weight: 800; padding: 1px 6px; border-radius: 4px; margin-left: 4px; }
+
+
+</style>
+</head>
+<body>
+<!-- PWA Install Banner -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99999;background:linear-gradient(135deg,#1a6e36,#2D9B4F);color:white;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,0.2);font-family:'Nunito',sans-serif;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span style="font-size:1.8rem">🐼</span>
+    <div>
+      <div style="font-weight:800;font-size:0.95rem">Install Vaccine Panda Audit</div>
+      <div style="font-size:0.75rem;opacity:0.85">Add to home screen for instant access</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <button onclick="installPWA()" style="background:#f7c843;color:#1a1a1a;border:none;border-radius:8px;padding:8px 16px;font-family:'Nunito',sans-serif;font-weight:800;font-size:0.85rem;cursor:pointer;">Install</button>
+    <button onclick="document.getElementById('installBanner').style.display='none'" style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;padding:8px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;">✕</button>
+  </div>
+</div>
+<script>
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+function installPWA() {
+  document.getElementById('installBanner').style.display = 'none';
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  }
+}
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').style.display = 'none';
+});
+</script>
+
+<header class="header">
+  <div class="header-logo">🐼</div>
+  <div class="header-text">
+    <h1>Vaccine Panda</h1>
+    <p>Daily Inventory Audit System</p>
+  </div>
+  <div class="header-badge" id="liveClock">--:-- --</div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-vaccine-btn" onclick="switchTab('vaccine')">
+    💉 Vaccine Inventory <span class="tab-pill" id="tab-vaccine-count">0</span>
+  </button>
+  <button class="tab-btn" id="tab-equipment-btn" onclick="switchTab('equipment')">
+    🧰 Equipment Audit <span class="tab-pill" id="tab-equipment-count">0</span>
+  </button>
+</div>
+
+<main class="main">
+
+<div class="tab-panel active" id="tab-vaccine">
+
+  <!-- AUDITOR INFO -->
+  <div class="card">
+    <div class="card-title"><span class="icon">👤</span> Auditor & Session Info</div>
+    <div class="timestamp-bar">
+      <div>📅 Date: <span id="auditDate">—</span></div>
+      <div>⏰ Time: <span id="auditTime">—</span></div>
+      <div>🆔 Audit ID: <span id="auditId">—</span></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Auditor's Full Name *</label>
+        <input type="text" id="auditorName" placeholder="e.g. Dr. Priya Sharma" />
+      </div>
+      <div class="form-group">
+        <label>Designation / Role</label>
+        <input type="text" id="auditorRole" placeholder="e.g. Pharmacist, Nurse" />
+      </div>
+      <div class="form-group">
+        <label>Branch / Location</label>
+        <input type="text" id="branch" placeholder="e.g. Saket Clinic" />
+      </div>
+      <div class="form-group">
+        <label>Audit Date *</label>
+        <input type="date" id="auditDateInput" />
+      </div>
+      <div class="form-group full">
+        <label>Notes / Remarks</label>
+        <textarea id="notes" rows="2" placeholder="Any special observations, discrepancies, or remarks..."></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD VACCINE ENTRY -->
+  <div class="card">
+    <div class="card-title"><span class="icon">💉</span> Add Vaccine Stock Entry</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Vaccine Category *</label>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <select id="categorySelect" onchange="populateVaccines()" style="flex:1;min-width:0;">
+            <option value="">— Select Category —</option>
+          </select>
+          <button class="btn-inline-add" onclick="openCategoryModal()" title="Add new category">＋ New</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Vaccine / Brand *</label>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+          <select id="vaccineSelect" onchange="onVaccineChange()" style="flex:1;min-width:0;">
+            <option value="">— Select Vaccine —</option>
+          </select>
+          <button class="btn-inline-add" onclick="openVaccineModal()" title="Add new vaccine">＋ New</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>MRP (auto-filled)</label>
+        <input type="text" id="mrpDisplay" placeholder="Select vaccine first" readonly style="background:#f0f8f2;color:var(--bamboo-dark);font-weight:700;" />
+      </div>
+      <div class="form-group">
+        <label>No. of Vials <span style="font-weight:400;color:#999;font-size:0.75rem">(optional)</span></label>
+        <input type="number" id="vialCount" min="0" placeholder="Leave blank if unknown" />
+      </div>
+      <div class="form-group">
+        <label>Expiry Date <span style="font-weight:400;color:#999;font-size:0.75rem">(optional)</span></label>
+        <input type="date" id="expiryDate" />
+      </div>
+      <div class="form-group">
+        <label>Batch / Lot No. <span style="font-weight:400;color:#999;font-size:0.75rem">(optional)</span></label>
+        <input type="text" id="batchNo" placeholder="e.g. BT2024X" />
+      </div>
+      <div class="form-group">
+        <label>Storage Temp (°C) <span style="font-weight:400;color:#999;font-size:0.75rem">(optional)</span></label>
+        <input type="number" id="tempInput" placeholder="e.g. 2" />
+      </div>
+    </div>
+    <button class="btn btn-add" onclick="addEntry()">➕ Add to Audit List</button>
+  </div>
+
+  <!-- MODAL: Add Category -->
+  <div id="categoryModal" class="modal-overlay" onclick="closeCategoryModal(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>🗂️ Add New Category</span>
+        <button class="modal-close" onclick="document.getElementById('categoryModal').classList.remove('open')">✕</button>
+      </div>
+      <p class="modal-hint">This category will be added to the dropdown for this session.</p>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>Category Name *</label>
+        <input type="text" id="newCatName" placeholder="e.g. COVID-19, Travel Vaccines..." onkeydown="if(event.key==='Enter')saveNewCategory()" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="saveNewCategory()">✅ Save Category</button>
+        <button class="btn" style="background:#eee;color:#555;flex:1;" onclick="document.getElementById('categoryModal').classList.remove('open')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add Vaccine -->
+  <div id="vaccineModal" class="modal-overlay" onclick="closeVaccineModal(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span>💉 Add New Vaccine / Brand</span>
+        <button class="modal-close" onclick="document.getElementById('vaccineModal').classList.remove('open')">✕</button>
+      </div>
+      <p class="modal-hint">This vaccine will be added to the selected category and available in the dropdown.</p>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Category (to add into) *</label>
+        <select id="newVacCat" style="width:100%;"></select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Vaccine / Brand Name *</label>
+        <input type="text" id="newVacName" placeholder="e.g. Covaxin, Rotavac..." onkeydown="if(event.key==='Enter')saveNewVaccine()" />
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label>MRP (₹) <span style="font-weight:400;color:#999;font-size:0.75rem">(optional)</span></label>
+        <input type="number" id="newVacMrp" placeholder="e.g. 1500" min="0" step="0.01" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="saveNewVaccine()">✅ Save Vaccine</button>
+        <button class="btn" style="background:#eee;color:#555;flex:1;" onclick="document.getElementById('vaccineModal').classList.remove('open')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIT LIST -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📋</span> Current Audit Entries</div>
+    <div id="entryList">
+      <div class="empty-state">
+        <span class="emoji">🐼</span>
+        No entries yet. Add vaccines above to begin your audit.
+      </div>
+    </div>
+  </div>
+
+
+</div><!-- /tab-vaccine -->
+
+<!-- ═══ EQUIPMENT AUDIT TAB ═══════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-equipment">
+
+  <!-- EQUIPMENT LIST CARD -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🧰</span> Equipment & Non-Vaccine Inventory</div>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:16px;">
+      Check each item's condition, enter the quantity present, and add notes if anything is damaged, missing, or needs attention.
+      Items marked <strong style="color:#e05252">Issue</strong> will be highlighted in the report.
+    </p>
+    <div style="overflow-x:auto;">
+      <table class="eq-table" id="eqTable">
+        <thead><tr>
+          <th style="min-width:180px">Item</th>
+          <th style="min-width:70px;text-align:center">Qty</th>
+          <th style="min-width:130px">Condition</th>
+          <th style="min-width:180px">Notes / Remarks</th>
+          <th style="min-width:40px"></th>
+        </tr></thead>
+        <tbody id="eqBody"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-add" onclick="addEqItem()" style="margin-top:14px;">➕ Add Equipment Item</button>
+  </div>
+
+  <!-- EQUIPMENT EXPORT -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📤</span> Export Equipment Audit</div>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:18px;">Export just the equipment audit, or use the combined export below to send everything together.</p>
+    <div class="actions-row">
+      <button class="btn btn-pdf" onclick="generateEquipmentPDF()">📄 Download Equipment PDF</button>
+      <button class="btn btn-whatsapp" onclick="shareEquipmentWhatsApp()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp Equipment Report
+      </button>
+    </div>
+  </div>
+
+  <!-- COMBINED EXPORT -->
+  <div class="card" style="background:linear-gradient(135deg,#e8f7ee,#fdf9e8);border-color:var(--accent);">
+    <div class="card-title" style="color:var(--accent-dark)"><span class="icon">🚀</span> Combined Full Audit Export</div>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:18px;">Send <strong>both vaccine inventory + equipment audit</strong> in a single WhatsApp message and PDF to the CEO.</p>
+    <div class="actions-row">
+      <button class="btn btn-pdf" onclick="generateCombinedPDF()" style="background:linear-gradient(135deg,#d4a017,#f7c843);color:#333;">📄 Combined PDF Report</button>
+      <button class="btn btn-whatsapp" onclick="shareCombinedWhatsApp()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Combined WhatsApp to CEO
+      </button>
+    </div>
+  </div>
+
+</div><!-- /tab-equipment -->
+
+<!-- MODAL: Add Equipment Item -->
+<div id="eqModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span>🧰 Add Equipment Item</span>
+      <button class="modal-close" onclick="document.getElementById('eqModal').classList.remove('open')">✕</button>
+    </div>
+    <p class="modal-hint">Add a custom equipment item to audit. It will appear in the list permanently for this session.</p>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Item Name *</label>
+      <input type="text" id="newEqName" placeholder="e.g. Glucometer, Oxygen Cylinder..." onkeydown="if(event.key==='Enter')saveNewEqItem()" />
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Category <span style="font-weight:400;color:#999;font-size:0.75rem">(optional)</span></label>
+      <input type="text" id="newEqCat" placeholder="e.g. Medical Equipment, Consumables..." />
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" style="flex:1;" onclick="saveNewEqItem()">✅ Add Item</button>
+      <button class="btn" style="background:#eee;color:#555;flex:1;" onclick="document.getElementById('eqModal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+  <!-- ACTIONS -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📤</span> Export & Share</div>
+    <p style="font-size:0.85rem;color:#666;margin-bottom:18px;">Download the PDF report or share directly via WhatsApp with the CEO (9810007056).</p>
+    <div class="actions-row">
+      <button class="btn btn-pdf" onclick="generatePDF()">📄 Download PDF Report</button>
+      <button class="btn btn-whatsapp" onclick="shareWhatsApp()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Share via WhatsApp
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── VACCINE DATA (Vaccine Panda official brand list with MRP) ────────────────
+const VACCINE_DB_RAW = {
+  'DTP/DTaP': [
+    {brand:'Hexasil PFS',mrp:2690},{brand:'Hexaxim',mrp:4330},
+    {brand:'Infanrix Hexa',mrp:3735},{brand:'Adacel-dTpa',mrp:1400},
+    {brand:'Easy Four Pol',mrp:2145},{brand:'BOOSTRIX-dTpa',mrp:1399},
+    {brand:'Easy Six',mrp:2995},{brand:'Pentavac PFS',mrp:420.39},
+    {brand:'Pentaxim',mrp:3350},{brand:'Tetraxim',mrp:2635}
+  ],
+  'Pneumococcal (PCV)': [
+    {brand:'Prevenar 13',mrp:3991.05},{brand:'Vaximune 13',mrp:3994},
+    {brand:'Pneumoguard 13',mrp:3969},{brand:'Nukovax 13',mrp:3975},
+    {brand:'Synflorix',mrp:2599},{brand:'Pneumosil',mrp:2280},
+    {brand:'Pneubevax 14',mrp:3465},{brand:'Pneumovax 23',mrp:2525},
+    {brand:'Vaximune 23',mrp:2300},{brand:'Pneumoshield 14',mrp:3800},
+    {brand:'Vaxiboon 23',mrp:2135}
+  ],
+  'Rotavirus': [
+    {brand:'Rotavac 5D PFS',mrp:897.25},{brand:'Rotateq',mrp:897},
+    {brand:'Rotasil Liquid',mrp:912}
+  ],
+  'Polio (OPV)': [
+    {brand:'OPV',mrp:50},{brand:'Biopolio OPV',mrp:50}
+  ],
+  'Typhoid': [
+    {brand:'Zyvac TCV PFS',mrp:2622},{brand:'Biovac TCV',mrp:2622},
+    {brand:'Typhi Bev',mrp:2366},{brand:'Typbar TCV PFS',mrp:2353},
+    {brand:'Enteroshield PFS',mrp:2347}
+  ],
+  'Influenza': [
+    {brand:'Fluarix Tetra Nasal',mrp:2499},{brand:'Influvac Tetra',mrp:2688},
+    {brand:'Fluquadri(adj)',mrp:2460},{brand:'Vaxiflu 4 SH',mrp:2007},
+    {brand:'Vaxigrip 3',mrp:1067},{brand:'Vaxiflu 3',mrp:1990}
+  ],
+  'Mumps/MMR': [
+    {brand:'Zyvac MMR',mrp:814},{brand:'Tresivac',mrp:725},
+    {brand:'Priorix (MMR)',mrp:941}
+  ],
+  'Chickenpox (Varicella)': [
+    {brand:'Nexipox Plus',mrp:2778},{brand:'Varipred',mrp:2500},
+    {brand:'Varilrix',mrp:2418}
+  ],
+  'Meningitis': [
+    {brand:'Menactra',mrp:5700},{brand:'Menveo',mrp:4728},
+    {brand:'Menifive',mrp:4000}
+  ],
+  'Herpes': [
+    {brand:'Shingrix',mrp:10999}
+  ],
+  'Cancer (HPV)': [
+    {brand:'Gardasil 9',mrp:10850},{brand:'Gardasil 4',mrp:3927},
+    {brand:'Cervavac',mrp:2000}
+  ],
+  'Hepatitis A': [
+    {brand:'Havrix 720',mrp:2528},{brand:'Biovac A',mrp:2320.5},
+    {brand:'Havshield',mrp:2515},{brand:'Havisure',mrp:1980},
+    {brand:'Havisure Adult',mrp:2150},{brand:'Hapi Bev',mrp:2286}
+  ],
+  'Hepatitis B': [
+    {brand:'Bevac',mrp:83},{brand:'Revac MCF',mrp:664.29}
+  ],
+  'Rabies': [
+    {brand:'Abhayrab',mrp:397},{brand:'Rabivaxx PFS',mrp:404},
+    {brand:'Imorab',mrp:397.62}
+  ],
+  'BCG': [
+    {brand:'Tubervac (BCG)',mrp:116.76}
+  ],
+  'Monoclonal Antibody': [
+    {brand:'Rabishield',mrp:2314}
+  ],
+  'Others': [
+    {brand:'Tetanus Toxoid',mrp:11.8},{brand:'Jevac PFS',mrp:710.38},
+    {brand:'Pentavac PFS',mrp:420.39},{brand:'Stamril',mrp:2450}
+  ]
+};
+
+// Simple lookup helpers
+const VACCINE_DB = {};
+Object.keys(VACCINE_DB_RAW).forEach(cat => {
+  VACCINE_DB[cat] = VACCINE_DB_RAW[cat].map(b => b.brand);
+});
+function getMRP(cat, brand) {
+  const found = (VACCINE_DB_RAW[cat] || []).find(b => b.brand === brand);
+  return found ? found.mrp : null;
+}
+
+let entries = [];
+let auditIdStr = "";
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  auditIdStr = 'VP-' + now.getFullYear().toString().slice(2) + 
+    String(now.getMonth()+1).padStart(2,'0') + 
+    String(now.getDate()).padStart(2,'0') + '-' + 
+    Math.floor(Math.random()*9000+1000);
+
+  document.getElementById('auditId').textContent = auditIdStr;
+  document.getElementById('auditDate').textContent = now.toLocaleDateString('en-IN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('auditDateInput').value = now.toISOString().split('T')[0];
+
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Populate categories using combined list
+  rebuildCategoryDropdown();
+  // Render equipment audit table
+  renderEquipment();
+});
+
+function updateClock() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true});
+  document.getElementById('liveClock').textContent = timeStr;
+  document.getElementById('auditTime').textContent = timeStr;
+}
+
+function populateVaccines() {
+  const cat = document.getElementById('categorySelect').value;
+  const vaccSel = document.getElementById('vaccineSelect');
+  vaccSel.innerHTML = '<option value="">— Select Vaccine —</option>';
+  document.getElementById('mrpDisplay').value = '';
+  if (cat && VACCINE_DB[cat]) {
+    VACCINE_DB[cat].forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      vaccSel.appendChild(opt);
+    });
+  }
+}
+
+function onVaccineChange() {
+  const cat = document.getElementById('categorySelect').value;
+  const brand = document.getElementById('vaccineSelect').value;
+  const mrp = getMRP(cat, brand);
+  document.getElementById('mrpDisplay').value = mrp ? '₹' + mrp.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+}
+
+function addEntry() {
+  const cat = document.getElementById('categorySelect').value;
+  const vaccine = document.getElementById('vaccineSelect').value;
+  const vials = document.getElementById('vialCount').value;
+  const expiry = document.getElementById('expiryDate').value;
+  const batch = document.getElementById('batchNo').value;
+  const temp = document.getElementById('tempInput').value;
+  const mrp = getMRP(cat, vaccine);
+
+  if (!cat || !vaccine) { showToast('⚠️ Please select category and vaccine'); return; }
+
+  entries.push({
+    cat, vaccine,
+    vials: vials !== '' ? parseInt(vials) : null,
+    expiry, batch, temp, mrp,
+    time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',hour12:true})
+  });
+
+  // Reset fields
+  document.getElementById('vialCount').value = '';
+  document.getElementById('expiryDate').value = '';
+  document.getElementById('batchNo').value = '';
+  document.getElementById('tempInput').value = '';
+  document.getElementById('mrpDisplay').value = '';
+
+  renderEntries();
+  showToast('✅ Vaccine added to audit list!');
+}
+
+function removeEntry(idx) {
+  entries.splice(idx, 1);
+  renderEntries();
+  showToast('🗑️ Entry removed');
+}
+
+function renderEntries() {
+  const list = document.getElementById('entryList');
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="emoji">🐼</span>No entries yet. Add vaccines above to begin your audit.</div>';
+    return;
+  }
+
+  let html = `<div style="overflow-x:auto">
+    <table class="summary-table">
+      <thead><tr>
+        <th>#</th><th>Category</th><th>Vaccine / Brand</th>
+        <th>MRP (₹)</th><th>Vials</th><th>Expiry</th><th>Batch</th><th>Temp</th><th>Added</th><th>Action</th>
+      </tr></thead><tbody>`;
+
+  entries.forEach((e, i) => {
+    const expClass = isExpiringSoon(e.expiry) ? 'style="color:#e05252;font-weight:800;"' : '';
+    const vialsDisplay = e.vials !== null ? `<span class="vials-badge">${e.vials}</span>` : '<span style="color:#bbb;font-size:0.8rem">—</span>';
+    const mrpDisplay = e.mrp ? `<span style="font-family:\'DM Mono\',monospace;font-size:0.82rem;color:var(--bamboo-dark);font-weight:700">₹${e.mrp.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>` : '—';
+    html += `<tr>
+      <td style="font-family:'DM Mono',monospace;color:#999;font-size:0.78rem">${i+1}</td>
+      <td style="font-size:0.82rem;color:var(--bamboo-dark);font-weight:700">${e.cat}</td>
+      <td style="font-weight:700">${e.vaccine}</td>
+      <td>${mrpDisplay}</td>
+      <td>${vialsDisplay}</td>
+      <td ${expClass}>${e.expiry || '—'}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:0.8rem">${e.batch || '—'}</td>
+      <td style="font-size:0.82rem">${e.temp ? e.temp+'°C' : '—'}</td>
+      <td style="font-size:0.78rem;color:#888">${e.time}</td>
+      <td><button class="btn-remove" onclick="removeEntry(${i})" title="Remove">✕</button></td>
+    </tr>`;
+  });
+
+  const totalVials = entries.reduce((s, e) => s + (e.vials || 0), 0);
+  html += `<tr style="background:var(--bamboo-dark)">
+    <td colspan="4" style="color:white;font-weight:800;font-size:0.85rem;padding:10px 14px">TOTAL</td>
+    <td><span class="vials-badge" style="background:var(--accent);color:var(--panda-black)">${totalVials}</span></td>
+    <td colspan="5"></td>
+  </tr>`;
+
+  html += '</tbody></table></div>';
+  list.innerHTML = html;
+  updateTabCounts();
+}
+
+function isExpiringSoon(dateStr) {
+  if (!dateStr) return false;
+  const exp = new Date(dateStr);
+  const diff = (exp - new Date()) / (1000 * 60 * 60 * 24);
+  return diff < 90;
+}
+
+// ─── PDF GENERATION ──────────────────────────────────────────────────────────
+function generatePDF(returnDoc = false) {
+  if (entries.length === 0) { showToast('⚠️ No entries to export'); return null; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 14;
+
+  // Header block
+  doc.setFillColor(29, 110, 54);
+  doc.rect(0, 0, pageW, 36, 'F');
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text('🐼  VACCINE PANDA – DAILY INVENTORY AUDIT', pageW / 2, 16, { align: 'center' });
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(180, 230, 195);
+  doc.text('Confidential Vaccine Stock Report', pageW / 2, 24, { align: 'center' });
+
+  // Yellow accent bar
+  doc.setFillColor(247, 200, 67);
+  doc.rect(0, 36, pageW, 2.5, 'F');
+
+  let y = 48;
+
+  // Audit Info
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(40, 40, 40);
+
+  const auditor = document.getElementById('auditorName').value || 'Not specified';
+  const role = document.getElementById('auditorRole').value || '—';
+  const branch = document.getElementById('branch').value || '—';
+  const auditDate = document.getElementById('auditDateInput').value || new Date().toISOString().split('T')[0];
+  const notes = document.getElementById('notes').value || '—';
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true});
+
+  const infoRows = [
+    ['Audit ID', auditIdStr, 'Audit Date', auditDate],
+    ['Auditor', auditor, 'Role', role],
+    ['Branch / Location', branch, 'Generated At', timeStr],
+  ];
+
+  doc.setFillColor(232, 247, 238);
+  doc.roundedRect(margin, y - 4, pageW - margin * 2, infoRows.length * 8 + 8, 3, 3, 'F');
+  doc.setDrawColor(180, 220, 190);
+  doc.roundedRect(margin, y - 4, pageW - margin * 2, infoRows.length * 8 + 8, 3, 3, 'S');
+
+  infoRows.forEach(row => {
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(29, 110, 54);
+    doc.text(row[0] + ':', margin + 4, y);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+    doc.text(row[1], margin + 40, y);
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(29, 110, 54);
+    doc.text(row[2] + ':', pageW / 2 + 4, y);
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(30, 30, 30);
+    doc.text(row[3], pageW / 2 + 38, y);
+    y += 8;
+  });
+  y += 6;
+
+  // Notes
+  if (notes !== '—') {
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(29, 110, 54);
+    doc.text('Remarks:', margin, y);
+    doc.setFont('helvetica', 'italic'); doc.setTextColor(60, 60, 60);
+    const wrapped = doc.splitTextToSize(notes, pageW - margin * 2 - 30);
+    doc.text(wrapped, margin + 24, y);
+    y += wrapped.length * 5 + 4;
+  }
+
+  // Table
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(29, 110, 54);
+  doc.text('VACCINE INVENTORY LIST', margin, y + 4);
+  y += 8;
+
+  const tableData = entries.map((e, i) => [
+    i + 1,
+    e.cat,
+    e.vaccine,
+    e.mrp ? '₹' + e.mrp.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—',
+    e.vials !== null ? e.vials : '—',
+    e.expiry || '—',
+    e.batch || '—',
+    e.temp ? e.temp + '°C' : '—',
+    e.time
+  ]);
+
+  const totalVials = entries.reduce((s, e) => s + (e.vials || 0), 0);
+  tableData.push(['', 'TOTAL', '', '', totalVials, '', '', '', '']);
+
+  doc.autoTable({
+    startY: y,
+    head: [['#', 'Category', 'Vaccine / Brand', 'MRP', 'Vials', 'Expiry', 'Batch', 'Temp', 'Added']],
+    body: tableData,
+    margin: { left: margin, right: margin },
+    headStyles: { fillColor: [29, 110, 54], textColor: 255, fontStyle: 'bold', fontSize: 7.5 },
+    bodyStyles: { fontSize: 7.5, textColor: [30, 30, 30] },
+    alternateRowStyles: { fillColor: [232, 247, 238] },
+    columnStyles: {
+      0: { cellWidth: 7, halign: 'center' },
+      3: { halign: 'right' },
+      4: { halign: 'center', fontStyle: 'bold' },
+    },
+    didParseCell: function(data) {
+      if (data.row.index === tableData.length - 1) {
+        data.cell.styles.fillColor = [29, 110, 54];
+        data.cell.styles.textColor = [255, 255, 255];
+        data.cell.styles.fontStyle = 'bold';
+      }
+    }
+  });
+
+  // Footer
+  const finalY = doc.lastAutoTable.finalY + 10;
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(150);
+  doc.text('Generated by Vaccine Panda Inventory Audit System • Confidential', pageW / 2, finalY, { align: 'center' });
+  doc.text('This document is for internal use only. Please maintain cold-chain compliance.', pageW / 2, finalY + 5, { align: 'center' });
+
+  if (returnDoc) return doc;
+
+  doc.save(`VaccinePanda_Audit_${auditDate.replace(/-/g,'')}_${auditIdStr}.pdf`);
+  showToast('📄 PDF downloaded!');
+}
+
+// ─── WHATSAPP SHARE ───────────────────────────────────────────────────────────
+function shareWhatsApp() {
+  if (entries.length === 0) { showToast('⚠️ No entries to share'); return; }
+
+  const auditor = document.getElementById('auditorName').value || 'Team';
+  const branch = document.getElementById('branch').value || '—';
+  const role = document.getElementById('auditorRole').value || '';
+  const auditDate = document.getElementById('auditDateInput').value;
+  const notes = document.getElementById('notes').value;
+  const totalVials = entries.reduce((s, e) => s + (e.vials || 0), 0);
+
+  // Group by category
+  const grouped = {};
+  entries.forEach(e => {
+    if (!grouped[e.cat]) grouped[e.cat] = [];
+    grouped[e.cat].push(e);
+  });
+
+  let msg = `🐼 *VACCINE PANDA – DAILY AUDIT REPORT*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📋 *Audit ID:* ${auditIdStr}\n`;
+  msg += `📅 *Date:* ${auditDate}\n`;
+  msg += `👤 *Auditor:* ${auditor}${role ? ' (' + role + ')' : ''}\n`;
+  msg += `🏥 *Branch:* ${branch}\n`;
+  msg += `⏰ *Time:* ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',hour12:true})}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  Object.entries(grouped).forEach(([cat, items]) => {
+    msg += `💉 *${cat}*\n`;
+    items.forEach(e => {
+      msg += `   • ${e.vaccine}`;
+      if (e.vials !== null) msg += ` — *${e.vials} vials*`;
+      if (e.mrp) msg += ` | MRP: ₹${e.mrp.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+      if (e.expiry) msg += ` | Exp: ${e.expiry}`;
+      if (e.batch) msg += ` | Lot: ${e.batch}`;
+      msg += '\n';
+    });
+    msg += '\n';
+  });
+
+  msg += `━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `📦 *TOTAL VIALS: ${totalVials}*\n`;
+  if (notes) msg += `\n📝 *Notes:* ${notes}\n`;
+  msg += `\n_Vaccine Panda Audit System_`;
+
+  const phone = '919810007056';
+  const encoded = encodeURIComponent(msg);
+  const url = `https://wa.me/${phone}?text=${encoded}`;
+
+  // Also generate PDF
+  generatePDF();
+
+  window.open(url, '_blank');
+  showToast('📱 Opening WhatsApp...');
+}
+
+
+
+// ─── EQUIPMENT AUDIT ─────────────────────────────────────────────────────────
+const DEFAULT_EQ_ITEMS = [
+  { name: 'Uniform (Set)',         category: 'Clothing',          qty: '', condition: 'ok',    notes: '' },
+  { name: 'Ice Box (Small)',        category: 'Cold Chain',        qty: '', condition: 'ok',    notes: '' },
+  { name: 'Ice Box (Large)',        category: 'Cold Chain',        qty: '', condition: 'ok',    notes: '' },
+  { name: 'Ice Packs',             category: 'Cold Chain',        qty: '', condition: 'ok',    notes: '' },
+  { name: 'Vaccine Carrier',       category: 'Cold Chain',        qty: '', condition: 'ok',    notes: '' },
+  { name: 'Infantometer (Manual)', category: 'Measuring Devices', qty: '', condition: 'ok',    notes: '' },
+  { name: 'Laser Infantometer',    category: 'Measuring Devices', qty: '', condition: 'ok',    notes: '' },
+  { name: 'Weighing Machine',      category: 'Measuring Devices', qty: '', condition: 'ok',    notes: '' },
+  { name: 'Digital Thermometer',   category: 'Medical Equipment', qty: '', condition: 'ok',    notes: '' },
+  { name: 'Refrigerator (Vaccine)',category: 'Cold Chain',        qty: '', condition: 'ok',    notes: '' },
+  { name: 'Syringe (0.5ml)',       category: 'Consumables',       qty: '', condition: 'ok',    notes: '' },
+  { name: 'Syringe (1ml)',         category: 'Consumables',       qty: '', condition: 'ok',    notes: '' },
+  { name: 'Needle (23G)',          category: 'Consumables',       qty: '', condition: 'ok',    notes: '' },
+  { name: 'Cotton Swabs',          category: 'Consumables',       qty: '', condition: 'ok',    notes: '' },
+  { name: 'Alcohol Wipes',         category: 'Consumables',       qty: '', condition: 'ok',    notes: '' },
+  { name: 'Gloves (Box)',          category: 'Consumables',       qty: '', condition: 'ok',    notes: '' },
+  { name: 'Sharps Container',      category: 'Waste Management',  qty: '', condition: 'ok',    notes: '' },
+  { name: 'Biomedical Waste Bag',  category: 'Waste Management',  qty: '', condition: 'ok',    notes: '' },
+  { name: 'First Aid Kit',         category: 'Safety',            qty: '', condition: 'ok',    notes: '' },
+  { name: 'Adrenaline (Epipen)',   category: 'Emergency Drugs',   qty: '', condition: 'ok',    notes: '' },
+];
+
+let eqItems = DEFAULT_EQ_ITEMS.map((e, i) => ({ ...e, id: i, custom: false }));
+let eqNextId = DEFAULT_EQ_ITEMS.length;
+
+function switchTab(tab) {
+  document.getElementById('tab-vaccine').classList.toggle('active', tab === 'vaccine');
+  document.getElementById('tab-equipment').classList.toggle('active', tab === 'equipment');
+  document.getElementById('tab-vaccine-btn').classList.toggle('active', tab === 'vaccine');
+  document.getElementById('tab-equipment-btn').classList.toggle('active', tab === 'equipment');
+}
+
+function updateTabCounts() {
+  document.getElementById('tab-vaccine-count').textContent = entries.length;
+  const issues = eqItems.filter(e => e.condition === 'issue').length;
+  document.getElementById('tab-equipment-count').textContent = eqItems.filter(e => e.qty !== '').length + (issues > 0 ? ' ⚠️' : '');
+}
+
+function renderEquipment() {
+  const tbody = document.getElementById('eqBody');
+  if (!tbody) return;
+  let html = '';
+  eqItems.forEach(item => {
+    const rowClass = item.condition === 'issue' ? 'eq-row-issue' : '';
+    const condColor = item.condition === 'ok' ? '#2D9B4F' : item.condition === 'issue' ? '#e05252' : '#aaa';
+    const customBadge = item.custom ? '<span class="badge-custom">★ Custom</span>' : '';
+    html += `<tr class="${rowClass}" id="eq-row-${item.id}">
+      <td style="font-weight:700">${item.name}${customBadge}<br><span style="font-size:0.72rem;color:#999;font-weight:400">${item.category}</span></td>
+      <td style="text-align:center">
+        <input class="eq-qty-input" type="number" min="0" value="${item.qty}"
+          onchange="eqUpdate(${item.id},'qty',this.value)" placeholder="—" />
+      </td>
+      <td>
+        <select class="condition-select" style="color:${condColor}"
+          onchange="eqUpdate(${item.id},'condition',this.value)">
+          <option value="ok"    ${item.condition==='ok'    ?'selected':''}>✅ Good</option>
+          <option value="issue" ${item.condition==='issue' ?'selected':''}>❌ Issue</option>
+          <option value="na"    ${item.condition==='na'    ?'selected':''}>— N/A</option>
+        </select>
+      </td>
+      <td>
+        <input class="eq-notes-input" type="text" value="${item.notes}"
+          onchange="eqUpdate(${item.id},'notes',this.value)"
+          placeholder="${item.condition==='issue'?'Describe the issue...':'Optional note...'}" />
+      </td>
+      <td>
+        ${item.custom ? `<button class="btn-remove" onclick="removeEqItem(${item.id})" title="Remove">✕</button>` : ''}
+      </td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+  updateTabCounts();
+}
+
+function eqUpdate(id, field, value) {
+  const item = eqItems.find(e => e.id === id);
+  if (!item) return;
+  item[field] = value;
+  // update row highlight live
+  const row = document.getElementById('eq-row-' + id);
+  if (row) {
+    row.className = value === 'issue' && field === 'condition' ? 'eq-row-issue' : '';
+    if (field === 'condition') {
+      const condColor = value === 'ok' ? '#2D9B4F' : value === 'issue' ? '#e05252' : '#aaa';
+      row.querySelector('.condition-select').style.color = condColor;
+      const notesInput = row.querySelector('.eq-notes-input');
+      notesInput.placeholder = value === 'issue' ? 'Describe the issue...' : 'Optional note...';
+    }
+  }
+  updateTabCounts();
+}
+
+function addEqItem() {
+  document.getElementById('newEqName').value = '';
+  document.getElementById('newEqCat').value = '';
+  document.getElementById('eqModal').classList.add('open');
+  setTimeout(() => document.getElementById('newEqName').focus(), 100);
+}
+
+function removeEqItem(id) {
+  eqItems = eqItems.filter(e => e.id !== id);
+  renderEquipment();
+  showToast('\u{1F5D1}\uFE0F Item removed');
+}
+
+function saveNewEqItem() {
+  const name = document.getElementById('newEqName').value.trim();
+  const cat  = document.getElementById('newEqCat').value.trim() || 'Custom';
+  if (!name) { showToast('\u26A0\uFE0F Please enter an item name'); return; }
+  if (eqItems.find(e => e.name.toLowerCase() === name.toLowerCase())) {
+    showToast('\u26A0\uFE0F Item already exists in the list'); return;
+  }
+  eqItems.push({ id: eqNextId++, name, category: cat, qty: '', condition: 'ok', notes: '', custom: true });
+  document.getElementById('eqModal').classList.remove('open');
+  renderEquipment();
+  // scroll to new item
+  setTimeout(() => {
+    const row = document.getElementById('eq-row-' + (eqNextId - 1));
+    if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+  showToast('\u2705 "' + name + '" added to equipment list!');
+}
+
+// ─── EQUIPMENT PDF ────────────────────────────────────────────────────────────
+function generateEquipmentPDF(returnDoc = false) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 14;
+
+  const auditor  = document.getElementById('auditorName').value || 'Not specified';
+  const role     = document.getElementById('auditorRole').value || '—';
+  const branch   = document.getElementById('branch').value || '—';
+  const auditDate= document.getElementById('auditDateInput').value || new Date().toISOString().split('T')[0];
+  const now      = new Date();
+  const timeStr  = now.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+
+  // Header
+  doc.setFillColor(29, 110, 54);
+  doc.rect(0, 0, pageW, 36, 'F');
+  doc.setFontSize(16); doc.setFont('helvetica','bold'); doc.setTextColor(255,255,255);
+  doc.text('VACCINE PANDA \u2013 EQUIPMENT AUDIT', pageW/2, 16, {align:'center'});
+  doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(180,230,195);
+  doc.text('Non-Vaccine Inventory & Equipment Status Report', pageW/2, 24, {align:'center'});
+  doc.setFillColor(247,200,67); doc.rect(0,36,pageW,2.5,'F');
+
+  let y = 48;
+  doc.setFontSize(8.5); doc.setFont('helvetica','bold'); doc.setTextColor(40,40,40);
+  const infoRows = [
+    ['Audit ID', auditIdStr, 'Audit Date', auditDate],
+    ['Auditor', auditor, 'Role', role],
+    ['Branch', branch, 'Generated At', timeStr],
+  ];
+  doc.setFillColor(232,247,238); doc.roundedRect(margin, y-4, pageW-margin*2, infoRows.length*8+8, 3,3,'F');
+  doc.setDrawColor(180,220,190); doc.roundedRect(margin, y-4, pageW-margin*2, infoRows.length*8+8, 3,3,'S');
+  infoRows.forEach(row => {
+    doc.setFont('helvetica','bold'); doc.setTextColor(29,110,54); doc.text(row[0]+':', margin+4, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.text(String(row[1]), margin+40, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(29,110,54); doc.text(row[2]+':', pageW/2+4, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(30,30,30); doc.text(String(row[3]), pageW/2+38, y);
+    y += 8;
+  });
+  y += 8;
+
+  // Issue summary
+  const issues = eqItems.filter(e => e.condition === 'issue');
+  if (issues.length > 0) {
+    doc.setFillColor(255,235,235); doc.roundedRect(margin, y-4, pageW-margin*2, 10, 3,3,'F');
+    doc.setFont('helvetica','bold'); doc.setTextColor(192,57,43);
+    doc.text('\u26A0  ' + issues.length + ' item(s) flagged with issues: ' + issues.map(e=>e.name).join(', '), margin+4, y+2);
+    y += 14;
+  }
+
+  // Table
+  doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(29,110,54);
+  doc.text('EQUIPMENT INVENTORY', margin, y);
+  y += 6;
+
+  const tableData = eqItems.map((e, i) => [
+    i+1, e.name, e.category,
+    e.qty !== '' ? e.qty : '—',
+    e.condition === 'ok' ? 'Good' : e.condition === 'issue' ? 'ISSUE' : 'N/A',
+    e.notes || '—'
+  ]);
+
+  doc.autoTable({
+    startY: y,
+    head: [['#','Item','Category','Qty','Condition','Notes']],
+    body: tableData,
+    margin: { left: margin, right: margin },
+    headStyles: { fillColor:[29,110,54], textColor:255, fontStyle:'bold', fontSize:7.5 },
+    bodyStyles: { fontSize:7.5, textColor:[30,30,30] },
+    alternateRowStyles: { fillColor:[232,247,238] },
+    columnStyles: { 0:{cellWidth:8,halign:'center'}, 3:{halign:'center'}, 4:{halign:'center',fontStyle:'bold'} },
+    didParseCell: function(data) {
+      if (data.column.index === 4 && data.section === 'body') {
+        if (data.cell.raw === 'ISSUE') {
+          data.cell.styles.textColor = [192,57,43];
+          data.cell.styles.fillColor = [255,235,235];
+        } else if (data.cell.raw === 'Good') {
+          data.cell.styles.textColor = [29,110,54];
+        }
+      }
+    }
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 8;
+  doc.setFontSize(7); doc.setFont('helvetica','italic'); doc.setTextColor(150);
+  doc.text('Generated by Vaccine Panda Audit System \u2022 Confidential', pageW/2, finalY, {align:'center'});
+
+  if (returnDoc) return doc;
+  doc.save('VaccinePanda_Equipment_' + auditDate.replace(/-/g,'') + '_' + auditIdStr + '.pdf');
+  showToast('\uD83D\uDCC4 Equipment PDF downloaded!');
+}
+
+// ─── EQUIPMENT WHATSAPP ───────────────────────────────────────────────────────
+function shareEquipmentWhatsApp() {
+  const auditor  = document.getElementById('auditorName').value || 'Team';
+  const branch   = document.getElementById('branch').value || '—';
+  const role     = document.getElementById('auditorRole').value || '';
+  const auditDate= document.getElementById('auditDateInput').value;
+
+  let msg = '\uD83D\uDC3C *VACCINE PANDA \u2013 EQUIPMENT AUDIT*\n';
+  msg += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+  msg += '\uD83D\uDCCB *Audit ID:* ' + auditIdStr + '\n';
+  msg += '\uD83D\uDCC5 *Date:* ' + auditDate + '\n';
+  msg += '\uD83D\uDC64 *Auditor:* ' + auditor + (role ? ' (' + role + ')' : '') + '\n';
+  msg += '\uD83C\uDFE5 *Branch:* ' + branch + '\n';
+  msg += '\u23F0 *Time:* ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + '\n';
+  msg += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+
+  const issues = eqItems.filter(e => e.condition === 'issue');
+  if (issues.length > 0) {
+    msg += '\u26A0\uFE0F *ITEMS WITH ISSUES*\n';
+    issues.forEach(e => {
+      msg += '   \u2022 *' + e.name + '*' + (e.notes ? ': ' + e.notes : '') + '\n';
+    });
+    msg += '\n';
+  }
+
+  msg += '\uD83D\uDCE6 *FULL EQUIPMENT STATUS*\n\n';
+  eqItems.forEach(e => {
+    const icon = e.condition === 'ok' ? '\u2705' : e.condition === 'issue' ? '\u274C' : '\u2796';
+    msg += icon + ' ' + e.name;
+    if (e.qty !== '') msg += ' \u2014 Qty: *' + e.qty + '*';
+    if (e.notes) msg += ' | ' + e.notes;
+    msg += '\n';
+  });
+
+  msg += '\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+  msg += '_Vaccine Panda Audit System_';
+
+  generateEquipmentPDF();
+  window.open('https://wa.me/919810007056?text=' + encodeURIComponent(msg), '_blank');
+  showToast('\uD83D\uDCF1 Opening WhatsApp...');
+}
+
+// ─── COMBINED EXPORT ──────────────────────────────────────────────────────────
+function generateCombinedPDF() {
+  if (entries.length === 0 && eqItems.every(e => e.qty === '' && e.condition === 'ok')) {
+    showToast('\u26A0\uFE0F Nothing to export yet'); return;
+  }
+  generatePDF();
+  setTimeout(() => generateEquipmentPDF(), 600);
+  showToast('\uD83D\uDCC4 Both PDFs downloaded!');
+}
+
+function shareCombinedWhatsApp() {
+  const auditor  = document.getElementById('auditorName').value || 'Team';
+  const branch   = document.getElementById('branch').value || '—';
+  const role     = document.getElementById('auditorRole').value || '';
+  const auditDate= document.getElementById('auditDateInput').value;
+  const notes    = document.getElementById('notes').value;
+  const totalVials = entries.reduce((s,e) => s + (e.vials||0), 0);
+
+  let msg = '\uD83D\uDC3C *VACCINE PANDA \u2013 FULL DAILY AUDIT REPORT*\n';
+  msg += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+  msg += '\uD83D\uDCCB *Audit ID:* ' + auditIdStr + '\n';
+  msg += '\uD83D\uDCC5 *Date:* ' + auditDate + '\n';
+  msg += '\uD83D\uDC64 *Auditor:* ' + auditor + (role ? ' (' + role + ')' : '') + '\n';
+  msg += '\uD83C\uDFE5 *Branch:* ' + branch + '\n';
+  msg += '\u23F0 *Time:* ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true}) + '\n';
+  msg += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+
+  // Vaccines
+  if (entries.length > 0) {
+    msg += '\uD83D\uDC89 *VACCINE INVENTORY (' + entries.length + ' items)*\n\n';
+    const grouped = {};
+    entries.forEach(e => { if (!grouped[e.cat]) grouped[e.cat]=[]; grouped[e.cat].push(e); });
+    Object.entries(grouped).forEach(([cat, items]) => {
+      msg += '\uD83D\uDC89 *' + cat + '*\n';
+      items.forEach(e => {
+        msg += '   \u2022 ' + e.vaccine;
+        if (e.vials !== null) msg += ' \u2014 *' + e.vials + ' vials*';
+        if (e.mrp) msg += ' | \u20B9' + e.mrp.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+        if (e.expiry) msg += ' | Exp: ' + e.expiry;
+        msg += '\n';
+      });
+      msg += '\n';
+    });
+    msg += '\uD83D\uDCE6 *TOTAL VIALS: ' + totalVials + '*\n';
+    if (notes) msg += '\uD83D\uDCDD *Vaccine Notes:* ' + notes + '\n';
+  } else {
+    msg += '\uD83D\uDC89 *VACCINES:* No entries recorded\n';
+  }
+
+  msg += '\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n\n';
+
+  // Equipment
+  const issues = eqItems.filter(e => e.condition === 'issue');
+  msg += '\uD83E\uDDF0 *EQUIPMENT AUDIT*\n\n';
+  if (issues.length > 0) {
+    msg += '\u26A0\uFE0F *ISSUES (' + issues.length + '):*\n';
+    issues.forEach(e => { msg += '   \u274C *' + e.name + '*' + (e.notes ? ': ' + e.notes : '') + '\n'; });
+    msg += '\n';
+  }
+  eqItems.forEach(e => {
+    const icon = e.condition === 'ok' ? '\u2705' : e.condition === 'issue' ? '\u274C' : '\u2796';
+    msg += icon + ' ' + e.name;
+    if (e.qty !== '') msg += ' (' + e.qty + ')';
+    if (e.notes && e.condition !== 'issue') msg += ' \u2014 ' + e.notes;
+    msg += '\n';
+  });
+
+  msg += '\n\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+  msg += '_Vaccine Panda Full Audit \u2022 ' + auditDate + '_';
+
+  generateCombinedPDF();
+  window.open('https://wa.me/919810007056?text=' + encodeURIComponent(msg), '_blank');
+  showToast('\uD83D\uDCF1 Full report sent to CEO!');
+}
+
+// ─── CUSTOM CATEGORY & VACCINE MANAGEMENT ────────────────────────────────────
+// Custom additions (session-only, added on top of VACCINE_DB_RAW)
+const customCategories = [];  // [{name}]
+const customVaccines = {};    // {cat: [{brand, mrp}]}
+
+function getAllCategories() {
+  const base = Object.keys(VACCINE_DB_RAW);
+  return base.concat(customCategories.map(c => c.name));
+}
+
+function getAllVaccinesForCat(cat) {
+  const base = (VACCINE_DB_RAW[cat] || []).map(b => b.brand);
+  const custom = (customVaccines[cat] || []).map(b => b.brand);
+  return base.concat(custom);
+}
+
+function getMRPAll(cat, brand) {
+  // check base first
+  const baseFound = (VACCINE_DB_RAW[cat] || []).find(b => b.brand === brand);
+  if (baseFound) return baseFound.mrp;
+  // check custom
+  const custFound = (customVaccines[cat] || []).find(b => b.brand === brand);
+  return custFound ? custFound.mrp : null;
+}
+
+function rebuildCategoryDropdown() {
+  const sel = document.getElementById('categorySelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select Category —</option>';
+  getAllCategories().forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    const isCustom = customCategories.some(c => c.name === cat);
+    opt.textContent = cat + (isCustom ? ' ★' : '');
+    if (cat === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function rebuildVaccineDropdown(catOverride) {
+  const cat = catOverride || document.getElementById('categorySelect').value;
+  const sel = document.getElementById('vaccineSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select Vaccine —</option>';
+  if (!cat) return;
+  getAllVaccinesForCat(cat).forEach(brand => {
+    const opt = document.createElement('option');
+    opt.value = brand;
+    const isCustom = (customVaccines[cat] || []).some(b => b.brand === brand);
+    opt.textContent = brand + (isCustom ? ' ★' : '');
+    if (brand === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// Override populateVaccines to use new combined list
+function populateVaccines() {
+  document.getElementById('mrpDisplay').value = '';
+  rebuildVaccineDropdown();
+}
+
+// Override onVaccineChange to use getMRPAll
+function onVaccineChange() {
+  const cat = document.getElementById('categorySelect').value;
+  const brand = document.getElementById('vaccineSelect').value;
+  const mrp = getMRPAll(cat, brand);
+  document.getElementById('mrpDisplay').value = mrp ? '\u20B9' + mrp.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+}
+
+// Override addEntry to use getMRPAll
+function addEntry() {
+  const cat = document.getElementById('categorySelect').value;
+  const vaccine = document.getElementById('vaccineSelect').value;
+  const vials = document.getElementById('vialCount').value;
+  const expiry = document.getElementById('expiryDate').value;
+  const batch = document.getElementById('batchNo').value;
+  const temp = document.getElementById('tempInput').value;
+  const mrp = getMRPAll(cat, vaccine);
+
+  if (!cat || !vaccine) { showToast('\u26A0\uFE0F Please select category and vaccine'); return; }
+
+  entries.push({
+    cat, vaccine,
+    vials: vials !== '' ? parseInt(vials) : null,
+    expiry, batch, temp, mrp,
+    time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',hour12:true})
+  });
+
+  document.getElementById('vialCount').value = '';
+  document.getElementById('expiryDate').value = '';
+  document.getElementById('batchNo').value = '';
+  document.getElementById('tempInput').value = '';
+  document.getElementById('mrpDisplay').value = '';
+
+  renderEntries();
+  showToast('\u2705 Vaccine added to audit list!');
+}
+
+// ─── CATEGORY MODAL ──────────────────────────────────────────────────────────
+function openCategoryModal() {
+  document.getElementById('newCatName').value = '';
+  document.getElementById('categoryModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCatName').focus(), 100);
+}
+
+function closeCategoryModal(e) {
+  if (e.target === document.getElementById('categoryModal')) {
+    document.getElementById('categoryModal').classList.remove('open');
+  }
+}
+
+function saveNewCategory() {
+  const name = document.getElementById('newCatName').value.trim();
+  if (!name) { document.getElementById('newCatName').focus(); showToast('\u26A0\uFE0F Please enter a category name'); return; }
+  const allCats = getAllCategories();
+  if (allCats.includes(name)) { showToast('\u26A0\uFE0F Category already exists'); return; }
+  customCategories.push({ name });
+  if (!customVaccines[name]) customVaccines[name] = [];
+  rebuildCategoryDropdown();
+  // auto-select the new category
+  document.getElementById('categorySelect').value = name;
+  populateVaccines();
+  document.getElementById('categoryModal').classList.remove('open');
+  showToast('\u2705 Category "' + name + '" added!');
+}
+
+// ─── VACCINE MODAL ────────────────────────────────────────────────────────────
+function openVaccineModal() {
+  document.getElementById('newVacName').value = '';
+  document.getElementById('newVacMrp').value = '';
+  // populate category dropdown in modal
+  const sel = document.getElementById('newVacCat');
+  sel.innerHTML = '<option value="">— Select Category —</option>';
+  getAllCategories().forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat; opt.textContent = cat;
+    // pre-select current category if one is chosen
+    if (cat === document.getElementById('categorySelect').value) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  document.getElementById('vaccineModal').classList.add('open');
+  setTimeout(() => document.getElementById('newVacName').focus(), 100);
+}
+
+function closeVaccineModal(e) {
+  if (e.target === document.getElementById('vaccineModal')) {
+    document.getElementById('vaccineModal').classList.remove('open');
+  }
+}
+
+function saveNewVaccine() {
+  const cat = document.getElementById('newVacCat').value;
+  const brand = document.getElementById('newVacName').value.trim();
+  const mrpRaw = document.getElementById('newVacMrp').value;
+  const mrp = mrpRaw ? parseFloat(mrpRaw) : null;
+
+  if (!cat) { showToast('\u26A0\uFE0F Please select a category'); return; }
+  if (!brand) { document.getElementById('newVacName').focus(); showToast('\u26A0\uFE0F Please enter a vaccine name'); return; }
+
+  const existing = getAllVaccinesForCat(cat);
+  if (existing.includes(brand)) { showToast('\u26A0\uFE0F Vaccine already exists in this category'); return; }
+
+  if (!customVaccines[cat]) customVaccines[cat] = [];
+  customVaccines[cat].push({ brand, mrp });
+
+  // Switch main form to that category and select the new vaccine
+  document.getElementById('categorySelect').value = cat;
+  rebuildVaccineDropdown(cat);
+  document.getElementById('vaccineSelect').value = brand;
+  onVaccineChange();
+
+  document.getElementById('vaccineModal').classList.remove('open');
+  showToast('\u2705 Vaccine "' + brand + '" added to ' + cat + '!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('VP Audit SW registered:', reg.scope))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
+</body>
+</html>
